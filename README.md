@@ -70,6 +70,16 @@ A massive **Multi-Target Random Forest Regressor** trained on 20,000+ synthetic 
    npm run dev
    ```
 
+## 🚀 One-Click "No-Sleep" Deployment
+
+Want to see it live right now? Use these buttons to deploy your own permanent research node:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fevildead23151%2FCircuitSim-Benchmarks&root-directory=frontend)
+> **Note**: This will host the UI permanently at `https://circuitsim-benchmarks.vercel.app`.
+
+[![Deploy to Hugging Face](https://huggingface.co/datasets/huggingface/badges/resolve/main/deploy-to-spaces-lg.svg)](https://huggingface.co/new-space?template=evildead23151/CircuitSim-Benchmarks)
+> **Note**: Connect your GitHub repo to a Docker Space on Hugging Face for a non-sleeping backend.
+
 ## 🌐 Live Deployment Guide
 
 For a "No-Sleep" research-grade experience, we recommend the following free stack:
