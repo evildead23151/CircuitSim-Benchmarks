@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Play, Sparkles, Activity, Gauge, AlertCircle, Info, Plus, Trash2, Layers, Settings2 } from 'lucide-react';
 import { TransientChart, ErrorSweepChart } from './Charts';
 
+const API_BASE = 'https://hot-wolves-warn.loca.lt';
+
 const Dashboard = ({ onSimulationComplete }) => {
     const [params, setParams] = useState({
         R: 1200,
@@ -24,7 +26,9 @@ const Dashboard = ({ onSimulationComplete }) => {
     React.useEffect(() => {
         const checkStatus = async () => {
             try {
-                const resp = await fetch('http://localhost:8000/');
+                const resp = await fetch(API_BASE, {
+                    headers: { 'Bypass-Tunnel-Reminder': 'true' }
+                });
                 const data = await resp.json();
                 setIsRemote(data.remote_active);
             } catch (e) { }
@@ -40,9 +44,12 @@ const Dashboard = ({ onSimulationComplete }) => {
                 ? { stages, frequency: params.frequency, vin: params.vin }
                 : params;
 
-            const response = await fetch(`http://localhost:8000${endpoint}`, {
+            const response = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();

@@ -14,6 +14,8 @@ import {
     Github
 } from 'lucide-react';
 
+const API_BASE = 'https://hot-wolves-warn.loca.lt';
+
 const ModelWorkbench = () => {
     const [selectedConfig, setSelectedConfig] = useState('rlc_series');
     const [uploading, setUploading] = useState(false);
@@ -39,9 +41,12 @@ const ModelWorkbench = () => {
     const handleConnectRemote = async () => {
         setConnecting(true);
         try {
-            const response = await fetch('http://localhost:8000/config/remote', {
+            const response = await fetch(`${API_BASE}/config/remote`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
                 body: JSON.stringify({ url: remoteUrl })
             });
             const data = await response.json();
@@ -74,8 +79,9 @@ const ModelWorkbench = () => {
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:8000/vision/extract', {
+            const response = await fetch(`${API_BASE}/vision/extract`, {
                 method: 'POST',
+                headers: { 'Bypass-Tunnel-Reminder': 'true' },
                 body: formData
             });
             const data = await response.json();
