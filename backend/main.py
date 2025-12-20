@@ -114,13 +114,15 @@ def solve_topological(circuit: TopologicalCircuit):
             
         M = M @ matrix
     
-    # Vin = M11*Vout + M12*Iout. Iout=0 for open load.
+    # Vin = M11*Vout + M12*Iout. 
+    # Assumption: Open-load condition (Iout = 0) at output port.
     m11 = M[0, 0]
     m21 = M[1, 0]
     vout = circuit.vin / m11 if m11 != 0 else complex(0)
     iin = m21 * vout
     
-    # Efficiency with reference RL=1k
+    # Efficiency with reference Load RL=1k
+    # Note: Efficiency is a relative heuristic for the passive network with 1k load.
     RL = 1000.0
     iout_load = circuit.vin / (M[0, 0] * RL + M[0, 1])
     vout_load = iout_load * RL
@@ -131,9 +133,12 @@ def solve_topological(circuit: TopologicalCircuit):
     
     return float(abs(vout)), float(abs(iin)) * 1000, float(eff)
 
-# --- ADVANCED TRANSIENT SOLVER (Switching Dynamics) ---
+# --- HEURISTIC TRANSIENT SOLVER (Approximative Dynamics) ---
 def get_transient_metrics(circuit: TopologicalCircuit):
-    """Placeholder for RK4 solver, using derived RLC analytics."""
+    """
+    HEURISTIC ONLY: Predicts transient metrics based on 2nd-order lumped equivalents.
+    Does not replace high-fidelity state-space ODE integration.
+    """
     eq_R = 1.0 + ESR_L
     eq_L = 1e-6
     eq_C = 1e-9
@@ -295,9 +300,9 @@ async def startup_event():
 @app.get("/")
 def read_root():
     return {
-        "status": "CircuitSim Deep-Theory API V3", 
+        "status": "CircuitSim Cascaded-Chain Framework V3", 
         "topo_v3_ready": topo_v3_model is not None,
-        "theory_context": "Alexander/Sadiku Non-Ideal Parasitics Enabled"
+        "assumptions": "LTI Linear Cascaded Stages only. No bridge/feedback support."
     }
 
 @app.post("/config/remote")
