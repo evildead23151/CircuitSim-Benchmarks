@@ -1,0 +1,56 @@
+{
+  "architecture": "MultiOutput(RandomForest)",
+  "n_samples": 5000,
+  "metrics": {
+    "vout": {
+      "mae": 0.15520604041535346,
+      "r2": -0.15021570574101806
+    },
+    "iin": {
+      "mae": 0.20164384082881853,
+      "r2": 0.050175834757448357
+    },
+    "efficiency": {
+      "mae": 0.052582866617508175,
+      "r2": 0.19667600258751194
+    }
+  },
+  "input_features": [
+    "tag_1",
+    "type_1",
+    "val_1",
+    "tag_2",
+    "type_2",
+    "val_2",
+    "tag_3",
+    "type_3",
+    "val_3",
+    "tag_4",
+    "type_4",
+    "val_4",
+    "tag_5",
+    "type_5",
+    "val_5",
+    "tag_6",
+    "type_6",
+    "val_6",
+    "tag_7",
+    "type_7",
+    "val_7",
+    "tag_8",
+    "type_8",
+    "val_8",
+    "tag_9",
+    "type_9",
+    "val_9",
+    "tag_10",
+    "type_10",
+    "val_10",
+    "freq"
+  ],
+  "target_features": [
+    "vout",
+    "iin",
+    "efficiency"
+  ]
+}

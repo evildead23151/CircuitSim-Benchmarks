@@ -1,0 +1,1 @@
+{"architecture": "RandomForestRegressor", "n_samples": 5000, "mae": 0.6140565673491845, "r2": 0.002210846987544701, "input_features": ["tag_1", "type_1", "val_1", "tag_2", "type_2", "val_2", "tag_3", "type_3", "val_3", "tag_4", "type_4", "val_4", "tag_5", "type_5", "val_5", "freq"]}

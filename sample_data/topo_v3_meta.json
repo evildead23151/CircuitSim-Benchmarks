@@ -1,0 +1,73 @@
+{
+  "version": "3.0-Textbook",
+  "timestamp": "2025-12-21T01:39:30.447365",
+  "architecture": "MultiOutput(RandomForestRegressor)",
+  "input_features": [
+    "tag_1",
+    "type_1",
+    "log_val_1",
+    "tag_2",
+    "type_2",
+    "log_val_2",
+    "tag_3",
+    "type_3",
+    "log_val_3",
+    "tag_4",
+    "type_4",
+    "log_val_4",
+    "tag_5",
+    "type_5",
+    "log_val_5",
+    "tag_6",
+    "type_6",
+    "log_val_6",
+    "tag_7",
+    "type_7",
+    "log_val_7",
+    "tag_8",
+    "type_8",
+    "log_val_8",
+    "tag_9",
+    "type_9",
+    "log_val_9",
+    "tag_10",
+    "type_10",
+    "log_val_10",
+    "log_freq"
+  ],
+  "target_features": [
+    "vout",
+    "iin",
+    "efficiency",
+    "rise_time",
+    "settling_time",
+    "overshoot"
+  ],
+  "metrics": {
+    "vout": {
+      "mae": 0.2841962160443037,
+      "r2": 0.0038917441443239165
+    },
+    "iin": {
+      "mae": 0.06329914277746011,
+      "r2": 0.6957184243909348
+    },
+    "efficiency": {
+      "mae": 0.03255827190530741,
+      "r2": 0.04801647144525201
+    },
+    "rise_time": {
+      "mae": 0.002783903778094679,
+      "r2": 0.4453862629043759
+    },
+    "settling_time": {
+      "mae": 0.01148470133272924,
+      "r2": 0.7955622632546158
+    },
+    "overshoot": {
+      "mae": 0.023006172656902406,
+      "r2": 0.7850928251689747
+    }
+  },
+  "theory_alignment": "Non-ideal RLC + Transient Dynamics"
+}
