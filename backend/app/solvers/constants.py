@@ -1,0 +1,12 @@
+ESR_L: float = 0.5       # Equivalent series resistance of inductors (Ohm)
+G_C: float = 1e-9        # Conductance of capacitors (S)
+LOAD_R: float = 1000.0   # Default load resistance (Ohm)
+EQ_L_BASE: float = 1e-6  # Base inductance for transient equiv circuit (H)
+EQ_C_BASE: float = 1e-9  # Base capacitance for transient equiv circuit (F)
+EQ_R_BASE: float = 1.0   # Base resistance for transient equiv circuit (Ohm)
+OOD_R_MIN: float = 0.1
+OOD_R_MAX: float = 10000.0
+OOD_L_MIN: float = 1e-6
+OOD_L_MAX: float = 1.0
+OOD_C_MIN: float = 1e-9
+OOD_C_MAX: float = 1e-3
