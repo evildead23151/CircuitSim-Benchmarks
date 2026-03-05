@@ -25,15 +25,32 @@ def list_models() -> list[dict]:
             "name": name,
             "available": getattr(model, "is_available", True),
             "description": getattr(model, "description", ""),
+            "type": getattr(model, "model_type", "surrogate"),
         })
     return result
 
 
 def compare_models(stages: list, frequency: float, vin: float) -> list[dict]:
     """Run all registered models on the given circuit and return comparison."""
-    features = build_features(stages, frequency)
+    from app.solvers.analytical import solve_topological
+
+    # Normalize stages to list of dicts for the solver
+    stage_dicts = []
+    for s in stages:
+        if isinstance(s, dict):
+            stage_dicts.append(s)
+        else:
+            stage_dicts.append({"tag": s.tag, "type": s.type, "value": s.value})
+
+    try:
+        ref_vout, _, _ = solve_topological(stage_dicts, frequency, vin)
+    except Exception:
+        ref_vout = None
+
+    features = build_features(stage_dicts, frequency)
     results = []
     for name, model in _registry.items():
+        available = getattr(model, "is_available", True)
         t0 = time.perf_counter()
         try:
             preds = model.predict(features)
@@ -42,11 +59,16 @@ def compare_models(stages: list, frequency: float, vin: float) -> list[dict]:
             logger.warning("Model %s predict failed: %s", name, e)
             vout = 0.0
         latency_ms = (time.perf_counter() - t0) * 1000
+        error_pct = 0.0
+        if ref_vout is not None and ref_vout > 1e-9:
+            error_pct = abs(vout - ref_vout) / ref_vout * 100
         results.append({
             "model_name": name,
             "vout": vout,
             "latency_ms": latency_ms,
             "source": name,
+            "error_pct": error_pct,
+            "available": available,
         })
     return results
 

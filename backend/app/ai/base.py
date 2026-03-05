@@ -15,6 +15,10 @@ class BaseSurrogate(ABC):
         return ""
 
     @property
+    def model_type(self) -> str:
+        return "surrogate"
+
+    @property
     def is_available(self) -> bool:
         return True
 

@@ -47,6 +47,7 @@ class ModelInfo(BaseModel):
     name: str
     available: bool
     description: str
+    type: str = ""
 
 
 class ModelCompareRequest(BaseModel):
@@ -60,3 +61,5 @@ class ModelCompareResult(BaseModel):
     vout: float
     latency_ms: float
     source: str
+    error_pct: float = 0.0
+    available: bool = True

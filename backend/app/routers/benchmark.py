@@ -39,13 +39,17 @@ def run_topological_benchmark(circuit: TopologicalCircuit):
     if rf_model is not None and rf_model.is_available:
         try:
             preds = rf_model.predict(features)
-            v_ai = float(preds[0]) * circuit.vin
-            i_ai = float(preds[1]) * circuit.vin * 1000
-            e_ai_val = float(preds[2])
-            tr_ai = float(preds[3]) * 1000
-            ts_ai = float(preds[4]) * 1000
-            mp_ai = float(preds[5]) * 100
-            source = "local-v3-deep"
+            if len(preds) >= 6:
+                v_ai = float(preds[0]) * circuit.vin
+                i_ai = float(preds[1]) * circuit.vin * 1000
+                e_ai_val = float(preds[2])
+                tr_ai = float(preds[3]) * 1000
+                ts_ai = float(preds[4]) * 1000
+                mp_ai = float(preds[5]) * 100
+                source = "local-v3-deep"
+            elif len(preds) > 0:
+                v_ai = float(preds[0]) * circuit.vin
+                source = "local-v3-partial"
         except Exception as e:
             logger.warning("RF model inference failed: %s", e)
 

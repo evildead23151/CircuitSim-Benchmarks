@@ -13,10 +13,12 @@ import {
     Loader2,
     Github
 } from 'lucide-react';
+import ModelComparisonDashboard from './ModelComparisonDashboard';
 
 const API_BASE = 'https://hot-wolves-warn.loca.lt';
 
 const ModelWorkbench = () => {
+    const [activeTab, setActiveTab] = useState('workbench'); // 'workbench' | 'compare'
     const [selectedConfig, setSelectedConfig] = useState('rlc_series');
     const [uploading, setUploading] = useState(false);
     const [showNetlistModal, setShowNetlistModal] = useState(false);
@@ -112,6 +114,28 @@ const ModelWorkbench = () => {
                 <p className="text-text-muted mt-2">Configure circuit physics, surrogate models, and benchmark environments.</p>
             </div>
 
+            {/* Tab switcher */}
+            <div className="flex gap-2 border-b border-border pb-2">
+                <button
+                    onClick={() => setActiveTab('workbench')}
+                    className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${activeTab === 'workbench' ? 'bg-primary text-white' : 'text-text-muted hover:text-text-main'}`}
+                >
+                    Workbench
+                </button>
+                <button
+                    onClick={() => setActiveTab('compare')}
+                    className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-colors flex items-center gap-1 ${activeTab === 'compare' ? 'bg-primary text-white' : 'text-text-muted hover:text-text-main'}`}
+                >
+                    <BarChart3 size={14} />
+                    Model Comparison
+                </button>
+            </div>
+
+            {/* Model Comparison Dashboard */}
+            {activeTab === 'compare' && <ModelComparisonDashboard />}
+
+            {/* Original Workbench content */}
+            {activeTab === 'workbench' && <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* Left Column: Circuit Configurator */}
@@ -410,6 +434,7 @@ uvicorn.run(app, host="0.0.0.0", port=8000)`}
                     </div>
                 </div>
             </div>
+
             {/* Netlist Editor Modal */}
             {showNetlistModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
@@ -453,6 +478,7 @@ uvicorn.run(app, host="0.0.0.0", port=8000)`}
                     </div>
                 </div>
             )}
+            </>}
         </div>
     );
 };
