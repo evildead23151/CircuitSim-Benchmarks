@@ -1,8 +1,10 @@
 fastapi
-uvicorn
+uvicorn[standard]
 numpy
 pandas
 scikit-learn
 pydantic
 python-multipart
 requests
+opencv-python-headless
+scipy
