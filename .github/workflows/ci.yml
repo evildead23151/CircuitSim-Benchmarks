@@ -1,0 +1,50 @@
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install ruff
+      - run: ruff check backend/ scripts/ tests/ --ignore E501,E402
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install system dependencies for OpenCV
+        run: |
+          sudo apt-get update && sudo apt-get install -y libgl1-mesa-glx libglib2.0-0
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Run tests
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+        run: pytest ../tests/ -v --tb=short
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t circuitsim-backend backend/
