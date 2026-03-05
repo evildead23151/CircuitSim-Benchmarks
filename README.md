@@ -40,6 +40,77 @@ A **Multi-Output Random Forest Regressor** trained on 20,000 synthetic simulatio
 └── sample_data/            # Phase 3 Prototype Models
 ```
 
+## ⚡ Quick Start (One Command)
+
+### Option A: Bare Metal (Recommended for Development)
+
+**Prerequisites:** Python 3.10+, Node.js 18+
+
+```bash
+git clone https://github.com/evildead23151/CircuitSim-Benchmarks.git
+cd CircuitSim-Benchmarks
+
+# macOS / Linux:
+chmod +x start.sh && ./start.sh
+
+# Windows:
+start.bat
+```
+
+This will:
+1. Create a Python virtual environment
+2. Install all backend & frontend dependencies
+3. Generate training data and train the AI model (first run only)
+4. Start the backend API on **http://localhost:8000**
+5. Start the frontend dashboard on **http://localhost:5173**
+
+### Option B: Docker Compose
+
+**Prerequisites:** Docker & Docker Compose
+
+```bash
+git clone https://github.com/evildead23151/CircuitSim-Benchmarks.git
+cd CircuitSim-Benchmarks
+
+# Generate training data first (requires Python locally)
+python3 scripts/generate_topological_dataset_v3.py
+python3 scripts/train_topological_v3.py
+
+# Launch full stack
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend Dashboard | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| API Documentation | http://localhost:8000/docs |
+
+### Manual Setup
+
+<details>
+<summary>Click to expand manual setup instructions</summary>
+
+**Terminal 1 — Backend:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+python3 scripts/generate_topological_dataset_v3.py
+python3 scripts/train_topological_v3.py
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+</details>
+
 ## 📄 License
 Distributed under the MIT License.
 
