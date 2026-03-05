@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Database,
     Upload,
@@ -11,10 +11,23 @@ import {
     CheckCircle2,
     AlertCircle,
     Loader2,
-    Github
+    Github,
+    RefreshCw,
+    ChevronDown,
+    Activity
 } from 'lucide-react';
 
 const API_BASE = 'https://hot-wolves-warn.loca.lt';
+
+// Human-readable labels for each surrogate
+const MODEL_META = {
+    random_forest: { label: 'Random Forest', color: 'text-green-400', badge: 'bg-green-500/10 text-green-400' },
+    mlp:           { label: 'Deep MLP',       color: 'text-blue-400',  badge: 'bg-blue-500/10 text-blue-400' },
+    pinn:          { label: 'PINN',            color: 'text-purple-400',badge: 'bg-purple-500/10 text-purple-400' },
+    deeponet:      { label: 'DeepONet',        color: 'text-yellow-400',badge: 'bg-yellow-500/10 text-yellow-400' },
+    fno:           { label: 'FNO-1D',          color: 'text-pink-400',  badge: 'bg-pink-500/10 text-pink-400' },
+    ensemble:      { label: 'Ensemble',        color: 'text-orange-400',badge: 'bg-orange-500/10 text-orange-400' },
+};
 
 const ModelWorkbench = () => {
     const [selectedConfig, setSelectedConfig] = useState('rlc_series');
@@ -27,6 +40,81 @@ const ModelWorkbench = () => {
     const fileInputRef = useRef(null);
     const modelInputRef = useRef(null);
     const [modelUploading, setModelUploading] = useState(false);
+
+    // Model registry state
+    const [modelList, setModelList] = useState([]);
+    const [activeModel, setActiveModel] = useState('random_forest');
+    const [loadingModels, setLoadingModels] = useState(false);
+    const [modelSelectOpen, setModelSelectOpen] = useState(false);
+    const [compareResults, setCompareResults] = useState(null);
+    const [comparingModels, setComparingModels] = useState(false);
+    const [ensembleUncertainty, setEnsembleUncertainty] = useState(null);
+
+    const fetchModelList = async () => {
+        setLoadingModels(true);
+        try {
+            const resp = await fetch(`${API_BASE}/models/list`, {
+                headers: { 'Bypass-Tunnel-Reminder': 'true' }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                setModelList(data.models || []);
+                setActiveModel(data.active_model || 'random_forest');
+            }
+        } catch (_) { /* backend offline – silently skip */ }
+        finally { setLoadingModels(false); }
+    };
+
+    const handleSelectModel = async (name) => {
+        setModelSelectOpen(false);
+        try {
+            const resp = await fetch(`${API_BASE}/models/select`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
+                body: JSON.stringify({ model_name: name })
+            });
+            if (resp.ok) setActiveModel(name);
+        } catch (_) { }
+    };
+
+    const handleCompareModels = async () => {
+        setComparingModels(true);
+        const payload = {
+            stages: [
+                { tag: 1, type: 'R', value: 100 },
+                { tag: 1, type: 'L', value: 0.001 },
+                { tag: 1, type: 'C', value: 1e-6 }
+            ],
+            frequency: 1000,
+            vin: 1.0
+        };
+        try {
+            const [compareResp, ensResp] = await Promise.all([
+                fetch(`${API_BASE}/models/compare`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
+                    body: JSON.stringify(payload)
+                }),
+                fetch(`${API_BASE}/models/predict/ensemble`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
+                    body: JSON.stringify(payload)
+                })
+            ]);
+            if (compareResp.ok) setCompareResults(await compareResp.json());
+            if (ensResp.ok) {
+                const ensData = await ensResp.json();
+                setEnsembleUncertainty(ensData.uncertainty);
+            }
+        } catch (_) {
+            alert('Backend not reachable for model comparison');
+        } finally {
+            setComparingModels(false);
+        }
+    };
+
+    useEffect(() => { fetchModelList(); }, []);
+
 
     const handleWeightSwap = (e) => {
         const file = e.target.files[0];
@@ -229,7 +317,7 @@ const ModelWorkbench = () => {
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h4 className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Active Surrogate</h4>
-                                <h3 className="text-xl font-bold text-white">ResNet-v2.4</h3>
+                                <h3 className="text-xl font-bold text-white">{MODEL_META[activeModel]?.label || activeModel}</h3>
                             </div>
                             <div className="p-2 bg-primary/10 rounded-full">
                                 <Database className="w-4 h-4 text-primary" />
@@ -409,6 +497,169 @@ uvicorn.run(app, host="0.0.0.0", port=8000)`}
                         <span>Warning: Current configuration deviates 12% from the training distribution mean. High error likely.</span>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Model Selector Dropdown ─────────────────────────────── */}
+            <div className="p-6 rounded-2xl bg-surface border border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-primary" />
+                        <h3 className="text-lg font-semibold text-white">SOTA Surrogate Models</h3>
+                    </div>
+                    <button
+                        onClick={fetchModelList}
+                        disabled={loadingModels}
+                        className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                        title="Refresh model list"
+                    >
+                        <RefreshCw className={`w-4 h-4 text-text-muted ${loadingModels ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Active Model Selector */}
+                    <div>
+                        <label className="text-[10px] text-text-muted uppercase font-bold block mb-2">Active Model for Benchmark</label>
+                        <div className="relative">
+                            <button
+                                onClick={() => setModelSelectOpen(o => !o)}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-background border border-white/10 rounded-xl text-sm text-white hover:border-primary transition-colors"
+                            >
+                                <span className={MODEL_META[activeModel]?.color || 'text-white'}>
+                                    {MODEL_META[activeModel]?.label || activeModel}
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-text-muted" />
+                            </button>
+                            {modelSelectOpen && (
+                                <div className="absolute z-20 mt-1 w-full bg-surface border border-border rounded-xl shadow-2xl overflow-hidden">
+                                    {Object.entries(MODEL_META).map(([key, meta]) => {
+                                        const entry = modelList.find(m => m.name === key);
+                                        const isLoaded = entry?.loaded ?? false;
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => handleSelectModel(key)}
+                                                disabled={!isLoaded}
+                                                className={`w-full flex items-center justify-between px-4 py-3 text-sm text-left transition-colors
+                                                    ${activeModel === key ? 'bg-primary/10' : 'hover:bg-white/5'}
+                                                    ${!isLoaded ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                            >
+                                                <span className={meta.color}>{meta.label}</span>
+                                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${isLoaded ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-text-muted'}`}>
+                                                    {isLoaded ? 'Loaded' : 'Not Loaded'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-text-muted mt-2">
+                            Selected model runs during <code className="font-mono text-primary">/benchmark/topological</code>.
+                        </p>
+                    </div>
+
+                    {/* Model Status Table */}
+                    <div>
+                        <label className="text-[10px] text-text-muted uppercase font-bold block mb-2">Registry Status</label>
+                        <div className="space-y-1">
+                            {Object.entries(MODEL_META).map(([key, meta]) => {
+                                const entry = modelList.find(m => m.name === key);
+                                const isLoaded = entry?.loaded ?? false;
+                                return (
+                                    <div key={key} className="flex items-center justify-between px-3 py-2 rounded-lg bg-background/50 border border-white/5 text-xs">
+                                        <span className={meta.color}>{meta.label}</span>
+                                        <span className={`${isLoaded ? 'text-green-400' : 'text-text-muted'}`}>
+                                            {loadingModels ? '...' : isLoaded ? '✓ Active' : '○ Offline'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Model Comparison Table ───────────────────────────────── */}
+            <div className="p-6 rounded-2xl bg-surface border border-border">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-primary" />
+                        <h3 className="text-lg font-semibold text-white">Model Comparison</h3>
+                        <span className="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-bold uppercase">
+                            RLC 100Ω / 1mH / 1µF @ 1kHz
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleCompareModels}
+                        disabled={comparingModels}
+                        className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                        {comparingModels ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                        {comparingModels ? 'Running...' : 'Run Comparison'}
+                    </button>
+                </div>
+
+                {compareResults ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead>
+                                <tr className="border-b border-white/10">
+                                    <th className="text-left py-2 pr-4 text-text-muted font-normal uppercase tracking-wider">Model</th>
+                                    <th className="text-right py-2 px-3 text-text-muted font-normal uppercase tracking-wider">Vout (V)</th>
+                                    <th className="text-right py-2 px-3 text-text-muted font-normal uppercase tracking-wider">Iin (mA)</th>
+                                    <th className="text-right py-2 px-3 text-text-muted font-normal uppercase tracking-wider">Eff (%)</th>
+                                    <th className="text-right py-2 px-3 text-text-muted font-normal uppercase tracking-wider">Rise (ms)</th>
+                                    <th className="text-right py-2 px-3 text-text-muted font-normal uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Object.entries(compareResults.models || {}).map(([name, m]) => {
+                                    const meta = MODEL_META[name] || { label: name, badge: 'bg-white/5 text-white', color: 'text-white' };
+                                    return (
+                                        <tr key={name} className="border-b border-white/5 hover:bg-white/[0.02]">
+                                            <td className="py-3 pr-4">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${meta.badge}`}>{meta.label}</span>
+                                            </td>
+                                            <td className="text-right py-3 px-3 font-mono text-white">
+                                                {m.status === 'ok' ? m.vout?.toFixed(4) : '—'}
+                                            </td>
+                                            <td className="text-right py-3 px-3 font-mono text-white">
+                                                {m.status === 'ok' ? (m.iin * 1000)?.toFixed(2) : '—'}
+                                            </td>
+                                            <td className="text-right py-3 px-3 font-mono text-white">
+                                                {m.status === 'ok' ? (m.efficiency * 100)?.toFixed(1) : '—'}
+                                            </td>
+                                            <td className="text-right py-3 px-3 font-mono text-white">
+                                                {m.status === 'ok' ? m.rise_time?.toFixed(2) : '—'}
+                                            </td>
+                                            <td className="text-right py-3 px-3">
+                                                <span className={`text-[9px] font-bold ${m.status === 'ok' ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {m.status === 'ok' ? '✓' : m.status === 'not_loaded' ? 'offline' : 'error'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+
+                        {ensembleUncertainty !== null && ensembleUncertainty !== undefined && (
+                            <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 text-[10px]">
+                                <Activity className="w-4 h-4 text-orange-400 shrink-0" />
+                                <span className="text-text-muted">
+                                    Ensemble uncertainty: <span className="text-orange-400 font-bold font-mono">{ensembleUncertainty.toFixed(4)}</span>
+                                    {' '}(mean std-dev across models and outputs)
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-text-muted gap-2">
+                        <BarChart3 className="w-8 h-8 opacity-30" />
+                        <p className="text-xs">Click "Run Comparison" to benchmark all loaded models on the same circuit.</p>
+                    </div>
+                )}
             </div>
             {/* Netlist Editor Modal */}
             {showNetlistModal && (
